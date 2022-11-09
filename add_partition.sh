@@ -19,14 +19,28 @@ function add_partition () {
 
  check=true
  while $check ; do
- 
+ if (( $maxs > $nexts )) ; then
+  pt_nm=$(date -d"$now" +"%Y%m"
+  if [ -z "$2" ] ;  then
+   pt_vl="'$next'"
+  else
+   pt_vl="to_char('$next'::timestamp,'$2')"
+  fi
+  ddl=$(eval echo $3)
+  deb-psql -d tomas -U tomas -p 5444 -t -c "
+alter table $1 add partition pt_$pt_nm values less than ($pt_lv);
+$ddl
+;"
+ else
+ echo "END"
+ fi
  done
 }
 
 add_partition "table_name" "" "
-add index ~~~
+add table \${1}_pt\$pt_nm add unique \(key\) ;
 "
 
 add_partition "table_name" "YYMMDD" "
-add index ~~~
+add table \${1}_pt\$pt_nm add unique \(key\) ;
 "
