@@ -14,13 +14,27 @@ function add_partition () {
  if [ -z "$2" ] ; then
   maxv="replace(max(high_value),'''','')"
  else
+  if [[ "$2" =~ "FF" ]]||[[ "$2" =~ "US" ]]
+  then
+   return
+  fi
   maxv="to_date(replace(max(high_value),'''',''),'$2')"
  fi
 
  check=true
  while $check ; do
+ now=$(edb-psql -t -csv -c "
+select $maxv
+from
+where table_name=upper('$1')
+")
+ if [-z "$now" ]; then
+  break
+ fi
+ next=$(date -d"$now KST +1 month" +%F %T")
+ nexts=$(date -d"$now KST +1 month" +%s")
  if (( $maxs > $nexts )) ; then
-  pt_nm=$(date -d"$now" +"%Y%m"
+  pt_nm=$(date -d"$now" +"%Y%m")
   if [ -z "$2" ] ;  then
    pt_vl="'$next'"
   else
@@ -32,6 +46,7 @@ alter table $1 add partition pt_$pt_nm values less than ($pt_lv);
 $ddl
 ;"
  else
+  check=false
  echo "END"
  fi
  done
